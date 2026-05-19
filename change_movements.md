@@ -426,3 +426,87 @@ All changes made by GitHub Copilot during this session.
 **Changes:**
 - Appended entry [33] for architecture and usage documentation creation
 - Added this entry [34] to track the log update itself
+
+---
+
+## [35] Created: Dockerfile
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `Dockerfile`  
+**Changes:**
+- Added multi-stage Docker build for Node.js TypeScript backend
+- Added build stage to compile TypeScript to `dist`
+- Added runtime stage with production dependency install and app startup command
+
+---
+
+## [36] Created: .dockerignore
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `.dockerignore`  
+**Changes:**
+- Added ignore rules for local artifacts and secrets (`node_modules`, `dist`, `.env`, `.git`, IDE files)
+- Excluded runtime storage output directories from Docker build context
+
+---
+
+## [37] Modified: Dockerfile
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `Dockerfile`  
+**Changes:**
+- Refactored stages to `deps`, `build`, and `runtime`
+- Added runtime hardening with `USER node`
+- Added runtime env defaults (`NODE_ENV=production`, `PORT=4000`)
+- Optimized runtime dependencies with `npm prune --omit=dev`
+- Ensured storage directories exist and are owned by runtime user
+
+---
+
+## [38] Modified: .dockerignore
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `.dockerignore`  
+**Changes:**
+- Removed `Dockerfile` from ignore list
+- Kept concise context filtering for faster Docker builds
+
+---
+
+## [39] Created: docker-compose.yml
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `docker-compose.yml`  
+**Changes:**
+- Added `redis` service with healthcheck
+- Added `app` service build config and dependency on healthy Redis
+- Wired container environment override `REDIS_HOST=redis`
+- Exposed ports `4000:4000` (app) and `6379:6379` (redis)
+
+---
+
+## [40] Modified: package.json
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `package.json`  
+**Changes:**
+- Updated Docker scripts to use Docker Compose (`docker:up`, `docker:down`)
+- Added stack lifecycle scripts (`docker:stack:up`, `docker:stack:down`)
+- Kept existing `predev`/`postdev` flow compatible with compose-managed Redis
+
+---
+
+## [41] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entries [35] through [40] for Docker, compose, and package script updates
+- Added this entry [41] to track the log update itself
