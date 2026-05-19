@@ -4,6 +4,7 @@ import { requestLoggerMiddleware } from '../middleware/requestLogger.middleware.
 import { registerRateLimiter } from '../middleware/rateLimiter/index.js';
 import healthRouter from '../routes/health.routes.js';
 import apiRouter from '../routes/api.routes.js';
+import redisRouter from '../routes/redis.routes.js';
 
 const app = express();
 
@@ -15,5 +16,6 @@ registerRateLimiter(app);
 
 app.use('/', healthRouter);
 app.use('/', apiRouter);
+app.use('/', redisRouter);
 
 export default app;

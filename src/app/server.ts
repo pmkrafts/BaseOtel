@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import app from './app.js';
 import { errorLogger, logger } from '../logging/logger.js';
+import { closeRedis } from '../redis/client.js';
 
 const PORT = process.env['PORT'] ?? '4000';
 
@@ -9,7 +10,8 @@ const server = app.listen(Number(PORT), () => {
 });
 
 const shutdown = () => {
-  server.close(() => {
+  server.close(async () => {
+    await closeRedis();
     logger.info('server_stopped');
     process.exit(0);
   });

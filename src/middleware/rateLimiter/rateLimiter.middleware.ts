@@ -1,15 +1,10 @@
 import { type NextFunction, type Request, type Response } from 'express';
+import env from '../../config/env.js';
+import { errorLogger } from '../../logging/logger.js';
+import { connectRedis, redisClient } from '../../redis/client.js';
 
-type RateLimitBucket = {
-  count: number;
-  windowStart: number;
-};
-
-const buckets = new Map<string, RateLimitBucket>();
-
-const windowSeconds = Number(process.env['RATE_LIMIT_WINDOW'] ?? '10');
-const maxRequests = Number(process.env['RATE_LIMIT_MAX'] ?? '5');
-const windowMs = windowSeconds * 1000;
+const windowSeconds = env.RATE_LIMIT_WINDOW;
+const maxRequests = env.RATE_LIMIT_MAX;
 
 const getClientKey = (req: Request): string => {
   const forwardedFor = req.header('x-forwarded-for');
@@ -20,38 +15,29 @@ const getClientKey = (req: Request): string => {
   return req.ip ?? 'unknown';
 };
 
-const pruneBuckets = (): void => {
-  const now = Date.now();
+export const rateLimiterMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await connectRedis();
 
-  for (const [key, bucket] of buckets.entries()) {
-    if (now - bucket.windowStart > windowMs) {
-      buckets.delete(key);
+    const clientKey = getClientKey(req);
+    const key = `rate_limit:${clientKey}`;
+
+    const count = await redisClient.incr(key);
+
+    if (count === 1) {
+      await redisClient.expire(key, windowSeconds);
     }
-  }
-};
 
-setInterval(pruneBuckets, Math.max(windowMs, 1000)).unref();
+    if (count > maxRequests) {
+      res.status(429).json({
+        error: 'Too many requests',
+      });
+      return;
+    }
 
-export const rateLimiterMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  const now = Date.now();
-  const key = getClientKey(req);
-
-  const currentBucket = buckets.get(key);
-
-  if (!currentBucket || now - currentBucket.windowStart >= windowMs) {
-    buckets.set(key, { count: 1, windowStart: now });
     next();
-    return;
+  } catch (error) {
+    errorLogger.error({ err: error }, 'rate_limiter_error');
+    next();
   }
-
-  currentBucket.count += 1;
-
-  if (currentBucket.count > maxRequests) {
-    res.status(429).json({
-      error: 'Too many requests',
-    });
-    return;
-  }
-
-  next();
 };

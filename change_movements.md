@@ -316,3 +316,113 @@ All changes made by GitHub Copilot during this session.
 **Changes:**
 - Appended entries [22], [23], and [24] to record recent middleware work
 - Added this entry [25] to track the log update itself
+
+---
+
+## [26] Modified: src/middleware/requestLogger.middleware.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/middleware/requestLogger.middleware.ts`  
+**Changes:**
+- Added `metricsLogger` and `traceLogger` usage alongside main `logger`
+- Reused a shared request payload object for all three log channels
+- Enabled writing request events to `metrics.log` and `trace.log` on every response finish
+
+---
+
+## [27] Modified: src/redis/client.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/redis/client.ts`  
+**Changes:**
+- Implemented Redis client with retry strategy and reconnect-on-error logic
+- Added connection lifecycle event logging (`connect`, `ready`, `error`, `close`, `reconnecting`)
+- Added `connectRedis()` and `closeRedis()` helpers for safe startup/shutdown handling
+- Added reusable Redis operation helpers: `setRedisValue()` and `getRedisValue()`
+- Fixed ioredis typing/import issues (`Redis` named import and typed error callback)
+
+---
+
+## [28] Modified: src/routes/redis.routes.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/routes/redis.routes.ts`  
+**Changes:**
+- Replaced placeholder `/redis-test` response with real Redis `SET` and `GET` operations
+- Added `/redis-flow` example endpoint demonstrating helper usage step-by-step
+- Added structured success/error JSON responses for Redis operation outcomes
+
+---
+
+## [29] Modified: src/app/server.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/app/server.ts`  
+**Changes:**
+- Imported and integrated `closeRedis()` into graceful shutdown path
+- Ensured Redis connection is closed before process exit on `SIGINT`/`SIGTERM`
+
+---
+
+## [30] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entries [26] through [29] to capture latest logging and Redis work
+- Added this entry [30] to record the log update itself
+
+---
+
+## [31] Modified: src/middleware/rateLimiter/rateLimiter.middleware.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/middleware/rateLimiter/rateLimiter.middleware.ts`  
+**Changes:**
+- Replaced in-memory bucket rate limiter with Redis naive limiter
+- Implemented `INCR` to increment request count per key `rate_limit:{clientIp}`
+- Implemented `EXPIRE` on first increment to enforce fixed request window
+- Added limit check against `RATE_LIMIT_MAX` and returns HTTP 429 when exceeded
+- Added error logging (`rate_limiter_error`) and fail-open behavior (`next()`) on Redis failures
+
+---
+
+## [32] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entry [31] for Redis-based naive limiter update
+- Added this entry [32] to track the log update itself
+
+---
+
+## [33] Created: PROJECT_ARCHITECTURE_AND_USAGE.md
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `PROJECT_ARCHITECTURE_AND_USAGE.md`  
+**Changes:**
+- Added full project guide covering Redis usage, architecture, and system design
+- Documented request flow, middleware layering, and component responsibilities
+- Documented naive Redis limiter design with `INCR` and `EXPIRE`
+- Added runbook steps for starting Redis, running server, and verifying endpoints
+- Included reliability behavior (retry, reconnect, graceful shutdown, fail-open)
+
+---
+
+## [34] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entry [33] for architecture and usage documentation creation
+- Added this entry [34] to track the log update itself
