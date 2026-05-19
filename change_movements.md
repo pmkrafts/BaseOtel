@@ -510,3 +510,206 @@ All changes made by Dev PM.
 **Changes:**
 - Appended entries [35] through [40] for Docker, compose, and package script updates
 - Added this entry [41] to track the log update itself
+
+---
+
+## [42] Modified: README.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `README.md`  
+**Changes:**
+- Reworked README to better explain current project usage and implementation understanding
+- Added architecture section covering request lifecycle and Redis naive limiter flow
+- Documented current implementation status, Docker Compose workflow, and endpoint validation commands
+- Updated scripts, quick start, and roadmap sections to match the live project state
+
+---
+
+## [43] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entry [42] for the README update
+- Added this entry [43] to keep the change log in sync
+
+---
+
+## [44] Created: src/middleware/rateLimiter/slidingWindow.middleware.ts
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `src/middleware/rateLimiter/slidingWindow.middleware.ts`  
+**Changes:**
+- Implemented production-grade sliding window rate limiter using Redis ZSETs
+- Atomic operation flow: ZREMRANGEBYSCORE (remove expired) → ZCOUNT (count active) → ZADD (record timestamp)
+- Key format: `rate_limit:{clientIp}` with members as `{timestamp}-{random}` and scores as Unix timestamps
+- Enforces true rolling window—no burst allowed at window boundaries
+- Window cleanup: EXPIRE set to `window * 2` to auto-evict stale keys
+- Fail-open on Redis errors: passes request through via `next()`
+- Logs errors to `sliding_window_limiter_error` channel
+
+---
+
+## [45] Modified: src/middleware/rateLimiter/index.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/middleware/rateLimiter/index.ts`  
+**Changes:**
+- Added import for `slidingWindowMiddleware`
+- Exported both `rateLimiterMiddleware` (naive) and `slidingWindowMiddleware` for comparison
+- Updated `registerRateLimiter` to wire `slidingWindowMiddleware` as the active limiter
+- Naive limiter remains available for reference/rollback if needed
+
+---
+
+## [46] Modified: src/routes/redis.routes.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/routes/redis.routes.ts`  
+**Changes:**
+- Added `getClientKey` helper function to extract client IP
+- Added `/rate-limit-debug` endpoint to inspect sliding window rate limiter state
+- Debug output includes: clientKey, Redis key, count, TTL, members with timestamps, current timestamp
+- Helpful for monitoring and validating rate limiter behavior in real-time
+
+---
+
+## [47] Phase 8: Sliding Window Limiter — COMPLETE
+
+**Date:** 2026-05-19  
+**Action:** Verification  
+**Phase:** 8 of 16  
+**Changes:**
+- Implemented Redis ZSET-based sliding window rate limiter (Phase 8)
+- Tested behavior: Requests 1-5 pass (200), request 6 blocked (429) per RATE_LIMIT_MAX=5
+- Verified window reset after RATE_LIMIT_WINDOW=10 seconds allows new request burst
+- Inspected Redis state via debug endpoint: 5 timestamps recorded with correct window semantics
+- Production-ready: atomic operations, fail-open, proper cleanup, request tracing
+
+**Test Results:**
+- All 6 rapid requests: 1-5 HTTP 200, 6th HTTP 429 ✓
+- Window reset after 10s: new requests allowed ✓
+- Debug endpoint shows correct ZSET members with member IDs and Unix timestamp scores ✓
+- Server logs confirm proper request tracing and Redis connection ✓
+
+---
+
+## [48] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entries [44] through [47] for sliding window implementation, debug endpoint, and completion
+- Added this entry [48] to finalize the change log
+
+---
+
+## [49] Created: TestUI/index.html
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `TestUI/index.html`  
+**Changes:**
+- Built production-grade test UI with responsive design (gradient background, card-based layout)
+- Configuration panel: API Host and Request Delay settings
+- Basic API tests: Health Check, API Data
+- Redis tests: SET/GET operations, multi-step flow
+- Rate limiting scenarios: Single request, burst (5), limit exceeded (6), window reset, debug state, concurrent requests
+- Color-coded results with JSON output, status badges (✓ Success, ✗ Error, ⟳ Loading)
+- Mobile-responsive grid layout with hover effects and smooth animations
+
+---
+
+## [50] Created: TestUI/api-client.js
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `TestUI/api-client.js`  
+**Changes:**
+- Implemented fetch API client functions for all project endpoints
+- Utility functions: getApiHost, getRequestDelay, displayResult, displayLoading, clearResult
+- Test functions organized by category: testHealth, testApiData, testRedisBasic, testRedisFlow, testRateLimitDebug
+- Rate limiting scenarios: testSingleRequest, testBurstRequests(count), testWindowReset, testConcurrentRequests
+- Each test displays: HTTP status, response duration, formatted JSON response, color-coded success/error badge
+- Error handling with fail-safe try/catch blocks
+
+---
+
+## [51] Created: TestUI/README.md
+
+**Date:** 2026-05-19  
+**Action:** Created  
+**File:** `TestUI/README.md`  
+**Changes:**
+- Comprehensive documentation for TestUI usage and setup
+- Quick Start instructions for running dev server and opening TestUI
+- Detailed endpoint and test scenario descriptions with expected behaviors
+- Configuration guide for API host, request delay, window settings
+- Results interpretation guide with color-coded examples
+- Common issues and troubleshooting section (CORS, server connection, rate limiting)
+- API response examples for all endpoints (200, 429 responses)
+- Development guide for adding new tests
+
+---
+
+## [52] Modified: src/app/app.ts
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `src/app/app.ts`  
+**Changes:**
+- Added CORS middleware import: `import cors from 'cors'`
+- Added CORS middleware to request pipeline: `app.use(cors())`
+- Placed CORS before other middleware to allow cross-origin requests from TestUI
+- Enables TestUI to communicate with API from different origin (http://127.0.0.1:8080 to http://localhost:4000)
+
+---
+
+## [53] Modified: package.json (Dependencies)
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `package.json`  
+**Changes:**
+- Added production dependency: `cors@^2.8.5` (Express CORS middleware)
+- Added dev dependency: `@types/cors@^2.8.19` (TypeScript types for CORS)
+- Purpose: Enable cross-origin resource sharing for TestUI browser access
+
+---
+
+## [54] TestUI & CORS Integration — COMPLETE
+
+**Date:** 2026-05-19  
+**Action:** Verification  
+**Component:** Test UI + CORS  
+**Changes:**
+- Created interactive TestUI in TestUI/ directory with HTML/JS fetch API
+- All APIs tested and working: Health, API Data, Redis SET/GET, Redis Flow
+- Rate limiting tests working: 6 concurrent requests show correct 429 blocking behavior
+- Debug endpoint accessible, shows ZSET state in Redis
+- CORS middleware enabled—TestUI (http://127.0.0.1:8080) communicates with API (http://localhost:4000)
+- http-server running on port 8080 serving TestUI
+
+**Test Results:**
+- Health Check: HTTP 200 with uptime data ✓
+- API Data: HTTP 200 with timestamp ✓
+- Burst 6 requests: All blocked (429) due to filled window from previous tests ✓
+- CORS: No blocking errors, full cross-origin support ✓
+- UI: Fully functional, responsive, real-time result display ✓
+
+---
+
+## [55] Modified: change_movements.md
+
+**Date:** 2026-05-19  
+**Action:** Modified  
+**File:** `change_movements.md`  
+**Changes:**
+- Appended entries [49] through [54] for TestUI creation, CORS integration, and verification
+- Added this entry [55] to keep the change log in sync

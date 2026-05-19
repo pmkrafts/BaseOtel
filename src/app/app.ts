@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { requestIdMiddleware } from '../middleware/requestId.middleware.js';
 import { requestLoggerMiddleware } from '../middleware/requestLogger.middleware.js';
 import { registerRateLimiter } from '../middleware/rateLimiter/index.js';
@@ -8,6 +9,7 @@ import redisRouter from '../routes/redis.routes.js';
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestIdMiddleware);
